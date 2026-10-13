@@ -21,6 +21,7 @@ UA = "okhttp/3.15"
 TIMEOUT = 12
 FETCH_POOL = 8
 MAX_SITES = 800
+TEST_WORD = "庆余年"  # CMS 播放级验证测试词（与 App 端一致）
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.environ.get("MERGE_OUT_DIR", HERE)
 OUT_JSON = os.path.join(OUT_DIR, "merged.json")
@@ -351,6 +352,73 @@ class Merger:
             kept.append(s)
         self.sites = kept
 
+    def verify_cms(self):
+        """type 0/1 CMS 源播放级验证（云端可做：搜索->详情含播放列表才保留）；
+        流探测因海外视角只做统计不做剔除依据。"""
+        cms = [s for s in self.sites if s.get("type") in (0, 1)]
+        if not cms:
+            self.stats["cms_ok"] = self.stats["cms_total"] = 0
+            return
+        print(f"play-verifying {len(cms)} cms sources ...")
+        ok_ids, stream_ok = set(), 0
+
+        def check(s):
+            try:
+                api = str(s["api"]).split("?")[0]
+                wd = urllib.parse.quote(TEST_WORD)
+                # 搜索（苹果CMS：json 接口带 ac=videolist；xml 接口 /at/xml/ 直接 wd）
+                r = http_get(f"{api}?ac=videolist&wd={wd}", timeout=15)
+                if r is None or r.status_code != 200:
+                    r = http_get(f"{api}?wd={wd}", timeout=15)
+                if r is None or r.status_code != 200:
+                    return s["key"], False, None, "search_fail"
+                body = r.text
+                vod_id = None
+                try:
+                    j = json.loads(body)
+                    lst = j.get("list") or []
+                    if lst:
+                        v = lst[0].get("vod_id")
+                        vod_id = str(v) if v is not None else None
+                except Exception:
+                    # XML 接口：<video><id>123</id>...</video>（DOTALL 防标签间换行）
+                    m = re.search(r'<video>.*?<id>(\d+)</id>', body, re.S)
+                    if m:
+                        vod_id = m.group(1)
+                    else:
+                        m2 = re.search(r'<id>(\d+)</id>', body)
+                        if m2:
+                            vod_id = m2.group(1)
+                if vod_id is None:
+                    return s["key"], False, None, "no_result"
+                # 详情：文本级搜播放地址（json/xml 通吃）
+                d = http_get(f"{api}?ac=videolist&ids={vod_id}", timeout=15) or \
+                    http_get(f"{api}?ac=detail&ids={vod_id}", timeout=15) or \
+                    http_get(f"{api}?ids={vod_id}", timeout=15)
+                if d is None or d.status_code != 200 or ("m3u8" not in d.text and "mp4" not in d.text):
+                    return s["key"], False, None, "detail_fail"
+                m = re.search(r'(https?://[^\s"\'<>]+?\.(?:m3u8|mp4)[^\s"\'<>]*)', d.text)
+                return s["key"], True, (m.group(1) if m else None), "ok"
+            except Exception:
+                return s["key"], False, None, "exception"
+
+        fail_reasons = {}
+        with cf.ThreadPoolExecutor(FETCH_POOL) as pool:
+            for key, ok, play, reason in pool.map(check, cms):
+                if ok:
+                    ok_ids.add(key)
+                    if play and http_ok(play):
+                        stream_ok += 1
+                else:
+                    fail_reasons[reason] = fail_reasons.get(reason, 0) + 1
+        print("cms fail reasons:", fail_reasons)
+        self.stats["cms_total"] = len(cms)
+        self.stats["cms_ok"] = len(ok_ids)
+        self.stats["cms_stream_ok"] = stream_ok
+        self.stats["cms_fail_reasons"] = fail_reasons
+        # 云端不剔除 CMS 源：海外视角下 search_fail 可能只是拒海外（设备端真实视角才做剔除）
+        # 仅剔除结构性死亡：接口彻底消失（域名解析失败级别的 exception 也不剔，保守全保留）
+
 
 def main():
     sources_file = os.path.join(HERE, "sources.json")
@@ -382,6 +450,7 @@ def main():
 
     print(f"alive configs: {alive}, merged sites: {len(merger.sites)}, dup dropped: {merger.stats['dup']}")
     merger.verify_and_drop()
+    merger.verify_cms()
     merger.stats["final"] = len(merger.sites)
 
     out = {"spider": "", "sites": merger.sites}
@@ -395,11 +464,17 @@ def main():
         json.dump(out, f, ensure_ascii=False)
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M UTC")
+    cms_line = ""
+    if merger.stats.get("cms_total"):
+        reasons = merger.stats.get("cms_fail_reasons", {})
+        cms_line = (f"；CMS播放级探测 {merger.stats['cms_ok']}/{merger.stats['cms_total']} 通过"
+                    f"（流可达 {merger.stats.get('cms_stream_ok', 0)}；失败分布 {reasons}——"
+                    f"海外视角仅统计不剔除，剔除由设备端真实视角决定）\n")
     rep = (f"# 融合报告 {now}\n\n- 配置源可用：{alive}/{len(urls)}\n"
            f"- 融合站源：{merger.stats['final']}（精确去重 {merger.stats['dup']}，"
            f"同名异写去重 {merger.stats['dup_norm']}，多线路收敛 {merger.stats['dup_line']}，"
            f"网盘入口收敛 {merger.stats['dup_pan']}，"
-           f"jar/ext 失效剔除 {merger.stats['dropped_dead']}，上限 {MAX_SITES}）\n")
+           f"失效剔除 {merger.stats['dropped_dead']}，上限 {MAX_SITES}）\n{cms_line}")
     with open(OUT_REPORT, "w", encoding="utf-8") as f:
         f.write(rep)
     print(rep)
