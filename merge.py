@@ -150,6 +150,44 @@ def absolutize(base_url, ref):
     return ref
 
 
+def pan_type(name, api):
+    """网盘类型识别：网盘是基础设施，多入口收敛（每类型留2个），凭证字段由设备端全局注入接管"""
+    s = (str(name) + "|" + str(api)).lower()
+    if "quark" in s or "夸克" in s: return "quark"
+    if "aliyun" in s or "alipan" in s or "ali_token" in s or "阿里" in s: return "ali"
+    if "uc" in s and ("盘" in s or "uc_" in s or "uc盘" in s): return "uc"
+    if "115" in s: return "115"
+    if "baidu" in s or "百度" in s: return "baidu"
+    if "thunder" in s or "迅雷" in s: return "thunder"
+    if "pikpak" in s: return "pikpak"
+    if "网盘" in s or "盘搜" in s: return "pan_misc"
+    return None
+
+
+# 云端无用户凭证：ext 里的网盘凭证字段删除（过时 token 有害），设备端融合时注入全局值
+PAN_FIELDS = ("ali_token", "aliToken", "ali_open_token", "aliyuntoken", "ali_refresh_token",
+              "quark_cookie", "quarkCookie", "quark", "bkquark_cookie",
+              "uc_cookie", "ucCookie", "pan115_cookie", "baidu_cookie", "bdstoken")
+
+
+def strip_pan_fields(ext_s):
+    """ext 为 JSON 字符串时删除网盘凭证字段"""
+    if not ext_s or not ext_s.strip().startswith("{"):
+        return ext_s, False
+    try:
+        obj = json.loads(ext_s)
+        if not isinstance(obj, dict):
+            return ext_s, False
+        changed = False
+        for f in PAN_FIELDS:
+            if f in obj:
+                del obj[f]
+                changed = True
+        return (json.dumps(obj, ensure_ascii=False), True) if changed else (ext_s, False)
+    except Exception:
+        return ext_s, False
+
+
 class Merger:
     def __init__(self):
         self.sites = []
@@ -159,11 +197,12 @@ class Merger:
         self.seen_norm = set()       # 归一化站名 + 爬虫类 指纹（emoji/装饰词差异判重）
         self.line_count = {}         # 同站点多线路收敛计数（每站点最多保留 2 条）
         self._line_names = {}        # 站点URL -> 已保留的归一化名集合
+        self.pan_count = {}          # 网盘类型 -> 已保留入口数（每类型留 2）
         self.parses = []
         self.seen_parse = set()
         self.lives = None
         self.wallpaper = ""
-        self.stats = {"configs": 0, "dup": 0, "dup_norm": 0, "dup_line": 0,
+        self.stats = {"configs": 0, "dup": 0, "dup_norm": 0, "dup_line": 0, "dup_pan": 0,
                       "dropped_dead": 0, "final": 0}
 
     def merge_one(self, root, config_url):
@@ -196,6 +235,16 @@ class Merger:
                 else:
                     ext_s = absolutize(config_url, str(ext or "").strip())
                 jar = absolutize(config_url, str(site.get("jar") or "").strip())
+
+                # 网盘类源收敛：同一网盘最多保留 2 个入口；凭证字段剥离（设备端全局注入接管）
+                ptype = pan_type(name, api)
+                if ptype:
+                    c = self.pan_count.get(ptype, 0)
+                    if c >= 2:
+                        self.stats["dup_pan"] += 1
+                        continue
+                    self.pan_count[ptype] = c + 1
+                    ext_s, _ = strip_pan_fields(ext_s)
 
                 # 判重1：同爬虫类 + 归一化同名（emoji/装饰词/_N 后缀差异全部命中）
                 norm_fp = api_class(api) + "|" + norm_name(name)
@@ -349,6 +398,7 @@ def main():
     rep = (f"# 融合报告 {now}\n\n- 配置源可用：{alive}/{len(urls)}\n"
            f"- 融合站源：{merger.stats['final']}（精确去重 {merger.stats['dup']}，"
            f"同名异写去重 {merger.stats['dup_norm']}，多线路收敛 {merger.stats['dup_line']}，"
+           f"网盘入口收敛 {merger.stats['dup_pan']}，"
            f"jar/ext 失效剔除 {merger.stats['dropped_dead']}，上限 {MAX_SITES}）\n")
     with open(OUT_REPORT, "w", encoding="utf-8") as f:
         f.write(rep)
