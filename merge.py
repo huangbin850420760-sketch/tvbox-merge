@@ -27,6 +27,42 @@ OUT_JSON = os.path.join(OUT_DIR, "merged.json")
 OUT_REPORT = os.path.join(OUT_DIR, "report.md")
 
 BASE_RE = re.compile(r"[A-Za-z0]{8}\*\*")
+EMOJI_RE = re.compile(r'[\U0001F300-\U0001FAFF\u2600-\u27BF\uFE0F️]')
+DECOR_RE = re.compile(r'4K|8K|超清|高清|HD|蓝光|备用\d*|专线|高速|优选|官源|ROM|影视|剧场|影院|大全|合集', re.I)
+NUM_RE = re.compile(r'[①②③④⑤⑥⑦⑧⑨⑩0-9⓪ⅠⅡⅢ一二三四五六七八九]')
+SEP_RE = re.compile(r'[\s\-—_|·/\\()（）\[\]【】*×.。:：,，、+]')
+
+
+def norm_name(n):
+    """站名归一化：去 emoji/序号/装饰词，用于同名不同写的判重"""
+    n = EMOJI_RE.sub('', str(n or ''))
+    n = NUM_RE.sub('', n)
+    n = DECOR_RE.sub('', n)
+    n = SEP_RE.sub('', n)
+    return n.strip().lower()
+
+
+def api_class(api):
+    """api 指纹：csp_XYZ 取类名 / 路径取末段文件名，识别'同爬虫引擎'"""
+    api = str(api or '')
+    m = re.search(r'csp_([A-Za-z0-9]+)', api)
+    if m:
+        return m.group(1)
+    seg = api.split('?')[0].rstrip('/').split('/')[-1]
+    return seg if 0 < len(seg) <= 40 else api[:60]
+
+
+def ext_site_urls(ext_s):
+    """ext 里的业务站点 URL 特征（域名+路径前40），用于识别同站点多线路"""
+    urls = re.findall(r'https?://[^\s"\'\\,]+', ext_s)
+    out = set()
+    for u in urls:
+        p = urllib.parse.urlparse(u)
+        if any(k in p.netloc for k in ('github.com', 'githubusercontent', 'jsdelivr', 'gitee.com',
+                                        'gh-proxy', 'ghproxy', '127.0.0.1', 'localhost')):
+            continue  # 公共代码托管CDN/本地代理不是业务站点（gitlab 不排除：大量源站配置托管在 gitlab）
+        out.add(p.netloc + (p.path.rstrip('/')[:40] if len(p.path) > 1 else ''))
+    return out
 
 
 def http_get(url, timeout=TIMEOUT, retries=1):
@@ -120,11 +156,15 @@ class Merger:
         self.used_keys = set()
         self.seen_name_api = set()
         self.seen_api_ext = set()
+        self.seen_norm = set()       # 归一化站名 + 爬虫类 指纹（emoji/装饰词差异判重）
+        self.line_count = {}         # 同站点多线路收敛计数（每站点最多保留 2 条）
+        self._line_names = {}        # 站点URL -> 已保留的归一化名集合
         self.parses = []
         self.seen_parse = set()
         self.lives = None
         self.wallpaper = ""
-        self.stats = {"configs": 0, "dup": 0, "dropped_dead": 0, "final": 0}
+        self.stats = {"configs": 0, "dup": 0, "dup_norm": 0, "dup_line": 0,
+                      "dropped_dead": 0, "final": 0}
 
     def merge_one(self, root, config_url):
         self.stats["configs"] += 1
@@ -145,6 +185,10 @@ class Merger:
                 if str(site.get("hide", "")) == "1":
                     continue
                 name = str(site.get("name") or key).strip() or key
+                try:
+                    stype = int(site.get("type", 3))
+                except Exception:
+                    stype = 3
                 api = absolutize(config_url, api)
                 ext = site.get("ext", "")
                 if isinstance(ext, (dict, list)):
@@ -153,6 +197,26 @@ class Merger:
                     ext_s = absolutize(config_url, str(ext or "").strip())
                 jar = absolutize(config_url, str(site.get("jar") or "").strip())
 
+                # 判重1：同爬虫类 + 归一化同名（emoji/装饰词/_N 后缀差异全部命中）
+                norm_fp = api_class(api) + "|" + norm_name(name)
+                if norm_fp in self.seen_norm:
+                    self.stats["dup_norm"] += 1
+                    continue
+
+                # 判重2：同站点多线路收敛（ext 内同业务站点 URL 且站名同源，每站点留 2 条）
+                line_hit = False
+                for u in ext_site_urls(ext_s):
+                    self.line_count[u] = self.line_count.get(u, 0) + 1
+                    if self.line_count[u] > 2 and norm_name(name) and any(
+                            norm_name(name) in prev or prev in norm_name(name)
+                            for prev in self._line_names.get(u, set())):
+                        line_hit = True
+                    self._line_names.setdefault(u, set()).add(norm_name(name))
+                if line_hit:
+                    self.stats["dup_line"] += 1
+                    continue
+
+                # 判重3：原双指纹
                 fp1 = name + "|" + api
                 if fp1 in self.seen_name_api:
                     self.stats["dup"] += 1
@@ -162,6 +226,7 @@ class Merger:
                     self.stats["dup"] += 1
                     continue
                 self.seen_name_api.add(fp1)
+                self.seen_norm.add(norm_fp)
                 if ext_s:
                     self.seen_api_ext.add(fp2)
 
@@ -172,7 +237,7 @@ class Merger:
                 self.used_keys.add(fkey)
 
                 ns = {"key": fkey, "name": name,
-                      "type": site.get("type", 3), "api": api,
+                      "type": stype, "api": api,
                       "searchable": site.get("searchable", 1),
                       "quickSearch": site.get("quickSearch", 1),
                       "filterable": site.get("filterable", 0)}
@@ -282,7 +347,8 @@ def main():
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M UTC")
     rep = (f"# 融合报告 {now}\n\n- 配置源可用：{alive}/{len(urls)}\n"
-           f"- 融合站源：{merger.stats['final']}（去重剔除 {merger.stats['dup']}，"
+           f"- 融合站源：{merger.stats['final']}（精确去重 {merger.stats['dup']}，"
+           f"同名异写去重 {merger.stats['dup_norm']}，多线路收敛 {merger.stats['dup_line']}，"
            f"jar/ext 失效剔除 {merger.stats['dropped_dead']}，上限 {MAX_SITES}）\n")
     with open(OUT_REPORT, "w", encoding="utf-8") as f:
         f.write(rep)
