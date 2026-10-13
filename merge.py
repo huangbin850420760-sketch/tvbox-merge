@@ -29,23 +29,33 @@ OUT_REPORT = os.path.join(OUT_DIR, "report.md")
 BASE_RE = re.compile(r"[A-Za-z0]{8}\*\*")
 
 
-def http_get(url, timeout=TIMEOUT):
-    try:
-        r = requests.get(url, timeout=timeout, headers={"User-Agent": UA},
-                         allow_redirects=True, verify=False)
-        return r
-    except Exception:
-        return None
+def http_get(url, timeout=TIMEOUT, retries=1):
+    """GET，失败重试（GitHub Actions runner 在海外，对国内源放宽一次重试降低误杀）"""
+    for attempt in range(retries + 1):
+        try:
+            r = requests.get(url, timeout=timeout, headers={"User-Agent": UA},
+                             allow_redirects=True, verify=False)
+            return r
+        except Exception:
+            if attempt < retries:
+                import time
+                time.sleep(2)
+    return None
 
 
 def http_ok(url):
-    """可达性检查（GET range 轻量探测）"""
-    try:
-        r = requests.get(url, timeout=10, headers={"User-Agent": UA, "Range": "bytes=0-63"},
-                         allow_redirects=True, verify=False)
-        return r.status_code in (200, 206, 302, 304)
-    except Exception:
-        return False
+    """可达性检查（GET range 轻量探测，失败重试一次防海外视角误杀）"""
+    for attempt in range(2):
+        try:
+            r = requests.get(url, timeout=10, headers={"User-Agent": UA, "Range": "bytes=0-63"},
+                             allow_redirects=True, verify=False)
+            if r.status_code in (200, 206, 302, 304):
+                return True
+        except Exception:
+            pass
+        import time
+        time.sleep(1)
+    return False
 
 
 def right_pad(s, ch, length):
