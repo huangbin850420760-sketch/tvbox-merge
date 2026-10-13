@@ -1,0 +1,40 @@
+name: Daily Merge
+on:
+  workflow_dispatch:
+  schedule:
+    # UTC 21:30 = 北京 05:30，排在 qist/tvbox 每日 05:20 重打包之后，拉到当天最新
+    - cron: "30 21 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install requests pycryptodome
+
+      - name: Run merge
+        run: python merge.py
+
+      - name: Commit & Publish
+        run: |
+          git config user.name "merge-bot"
+          git config user.email "merge-bot@users.noreply.github.com"
+          git add merged.json report.md
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "auto merge $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi

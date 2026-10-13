@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "updatedAt": "2026-10-12",
+  "sources": [
+    {
+      "name": "王二小",
+      "url": "http://tvbox.王二小放牛娃.top",
+      "from": "builtin"
+    },
+    {
+      "name": "肥猫线路",
+      "url": "http://肥猫.com/",
+      "from": "builtin"
+    },
+    {
+      "name": "摸鱼接口",
+      "url": "http://我不是.摸鱼儿.com",
+      "from": "builtin"
+    },
+    {
+      "name": "OK吊炸天",
+      "url": "http://ok321.top/tv",
+      "from": "builtin"
+    },
+    {
+      "name": "未命名1",
+      "url": "https://yydf.540734621.xyz/QQ/yydf2024.json",
+      "from": "builtin"
+    },
+    {
+      "name": "巧技接口",
+      "url": "http://cdn.qiaoji8.com/tvbox.json",
+      "from": "builtin"
+    },
+    {
+      "name": "吃猫的鱼",
+      "url": "https://d.kstore.dev/download/7213/吃猫的鱼",
+      "from": "builtin"
+    },
+    {
+      "name": "欧歌单线路",
+      "url": "https://xn--xkkx-rp5imh.v.nxog.top/api.php?id=3",
+      "from": "builtin"
+    },
+    {
+      "name": "菜妮丝XBPQ",
+      "url": "https://tv.xn--yhqu5zs87a.top",
+      "from": "builtin"
+    },
+    {
+      "name": "4K影视仓",
+      "url": "http://4K4K.shop/",
+      "from": "builtin"
+    },
+    {
+      "name": "天微科技",
+      "url": "https://github.moeyy.xyz/https://raw.githubusercontent.com/vcloudc/tvbox/main/tw/api.json",
+      "from": "builtin"
+    },
+    {
+      "name": "非凡小小",
+      "url": "https://g.3344550.xyz/https://raw.githubusercontent.com/jigedos/1024/master/jsm.json",
+      "from": "builtin"
+    },
+    {
+      "name": "二月红",
+      "url": "https://700sjro44343.vicp.fun/eggp/0211/tv.json",
+      "from": "builtin"
+    },
+    {
+      "name": "挺好分享",
+      "url": "http://ztha.top/TVBox/thdjk.json",
+      "from": "builtin"
+    },
+    {
+      "name": "蓝天日记",
+      "url": "https://gitee.com/lukei7/lib/raw/Luck/%E8%87%AA%E5%BB%BA.json",
+      "from": "builtin"
+    },
+    {
+      "name": "传说blog",
+      "url": "https://chuanshuo.77blog.cn/tv.json",
+      "from": "builtin"
+    },
+    {
+      "name": "青龙",
+      "url": "https://gitee.com/yiwu369/6758/raw/master/%E9%9D%92%E9%BE%99/1.json",
+      "from": "builtin"
+    },
+    {
+      "name": "香雅情短剧",
+      "url": "http://74.120.175.78/JK/XYQTVBox/dj.json",
+      "from": "builtin"
+    },
+    {
+      "name": "短剧频道",
+      "url": "http://box.ufuzi.com/tv/qq/短剧频道/api.json",
+      "from": "builtin"
+    },
+    {
+      "name": "少儿频道",
+      "url": "https://jihulab.com/ymz1231/xymz/-/raw/main/ymshaoer",
+      "from": "builtin"
+    },
+    {
+      "name": "欧歌接口",
+      "url": "https://xn--sdds-rp5imh.v.nxog.top/apitv.php?id=3",
+      "from": "builtin"
+    },
+    {
+      "name": "俊哥接口",
+      "url": "http://home.jundie.top:81/top98.json",
+      "from": "builtin"
+    },
+    {
+      "name": "4K云盘",
+      "url": "https://9xi4o.tk/0725.json",
+      "from": "builtin"
+    },
+    {
+      "name": "巧儿接口",
+      "url": "http://pandown.pro/tvbox/tvbox.json",
+      "from": "builtin"
+    },
+    {
+      "name": "胖虎接口",
+      "url": "https://notabug.org/imbig66/tv-spider-man/raw/master/%E9%85%8D%E7%BD%AE/0801.json",
+      "from": "builtin"
+    },
+    {
+      "name": "黄金分割",
+      "url": "https://gitlab.com/lzc1021lzc/hjfggzs.hjys/-/raw/main/hjys.free.json",
+      "from": "builtin"
+    },
+    {
+      "name": "影视仓",
+      "url": "http://影视仓.com/",
+      "from": "builtin"
+    },
+    {
+      "name": "肥猫接口",
+      "url": "http://ceshi.肥猫.com/PandaQ",
+      "from": "builtin"
+    },
+    {
+      "name": "肥猫备用",
+      "url": "http://肥猫.com",
+      "from": "builtin"
+    },
+    {
+      "name": "饭太硬",
+      "url": "http://www.饭太硬.com/tv",
+      "from": "builtin"
+    },
+    {
+      "name": "饭太硬备1",
+      "url": "http://fty.xxooo.cf/tv",
+      "from": "builtin"
+    },
+    {
+      "name": "饭太硬备2",
+      "url": "http://fty.888484.xyz/tv",
+      "from": "builtin"
+    },
+    {
+      "name": "毒盒",
+      "url": "https://毒盒.com/tv",
+      "from": "builtin"
+    },
+    {
+      "name": "小盒子4K",
+      "url": "http://xhztv.top/4k.json",
+      "from": "builtin"
+    },
+    {
+      "name": "爱TV吧",
+      "url": "https://哪吒.live/",
+      "from": "builtin"
+    },
+    {
+      "name": "欧歌4K",
+      "url": "http://tv.nxog.top/m",
+      "from": "builtin"
+    },
+    {
+      "name": "欧歌免费",
+      "url": "https://tv.nxog.top/m/111.php?ou=公众号欧歌app&mz=index&jar=index&123&b=tv",
+      "from": "builtin"
+    },
+    {
+      "name": "小米接口",
+      "url": "http://www.mpanso.com/小米/DEMO.json",
+      "from": "builtin"
+    },
+    {
+      "name": "王二小接口",
+      "url": "http://tvbox.xn--4kq62z5rby2qupq9ub.top/",
+      "from": "builtin"
+    },
+    {
+      "name": "王二小放牛娃",
+      "url": "http://tv.999888987.xyz",
+      "from": "builtin"
+    },
+    {
+      "name": "南风接口",
+      "url": "https://raw.githubusercontent.com/yoursmile66/TVBox/main/XC.json",
+      "from": "builtin"
+    },
+    {
+      "name": "南风代理",
+      "url": "https://gh.aptv.app/https://raw.githubusercontent.com/yoursmile66/TVBox/main/XC.json",
+      "from": "builtin"
+    },
+    {
+      "name": "qist:0707多线",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/0707.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:0821大而全",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/0821.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:0825小而精",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/0825.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:0826饭太硬",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/0826.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:0827fongmi",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/0827.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:367",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/367.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:9918",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/9918.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:99188",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/99188.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:XYQ",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/XYQ.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:dianshi",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/dianshi.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:fty",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/fty.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:js",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/js.json",
+      "from": "qist"
+    },
+    {
+      "name": "qist:jsm",
+      "url": "https://raw.githubusercontent.com/qist/tvbox/master/jsm.json",
+      "from": "qist"
+    },
+    {
+      "name": "MediaHub(百度网盘优化)",
+      "url": "https://mediahub.527145.xyz/tvbox/source.json",
+      "from": "builtin"
+    }
+  ]
+}
