@@ -22,8 +22,9 @@ TIMEOUT = 12
 FETCH_POOL = 8
 MAX_SITES = 800
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_JSON = os.path.join(HERE, "merged.json")
-OUT_REPORT = os.path.join(HERE, "report.md")
+OUT_DIR = os.environ.get("MERGE_OUT_DIR", HERE)
+OUT_JSON = os.path.join(OUT_DIR, "merged.json")
+OUT_REPORT = os.path.join(OUT_DIR, "report.md")
 
 BASE_RE = re.compile(r"[A-Za-z0]{8}\*\*")
 

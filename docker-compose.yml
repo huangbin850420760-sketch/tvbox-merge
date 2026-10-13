@@ -1,0 +1,12 @@
+services:
+  tvbox-merge:
+    build: .
+    container_name: tvbox-merge
+    restart: unless-stopped
+    environment:
+      - MERGE_INTERVAL=86400   # 融合间隔（秒），默认每天
+      - TZ=Asia/Shanghai
+    ports:
+      - "8000:8000"            # TVBox 配置地址: http://<设备IP>:8000/merged.json
+    volumes:
+      - ./out:/srv/out         # 融合产物持久化
