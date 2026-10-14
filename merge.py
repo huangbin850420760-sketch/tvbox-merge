@@ -463,6 +463,27 @@ def main():
     with open(OUT_JSON, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False)
 
+    # 分引擎版本：jar 版 / js 版（故障隔离 + 轻量选项；CMS 无引擎两边都带）
+    def engine_of(s):
+        api = str(s.get("api", ""))
+        if s.get("type") in (0, 1):
+            return "cms"
+        if api.endswith(".js") or ".js?" in api:
+            return "js"
+        return "jar"
+
+    jar_sites = [s for s in merger.sites if engine_of(s) in ("jar", "cms")]
+    js_sites = [s for s in merger.sites if engine_of(s) in ("js", "cms")]
+    n_jar = sum(1 for s in merger.sites if engine_of(s) == "jar")
+    n_js = sum(1 for s in merger.sites if engine_of(s) == "js")
+    n_cms = sum(1 for s in merger.sites if engine_of(s) == "cms")
+    for name, arr in (("merged-jar.json", jar_sites), ("merged-js.json", js_sites)):
+        sub = dict(out)
+        sub["sites"] = arr
+        with open(os.path.join(OUT_DIR, name), "w", encoding="utf-8") as f:
+            json.dump(sub, f, ensure_ascii=False)
+    merger.stats["n_jar"], merger.stats["n_js"], merger.stats["n_cms"] = n_jar, n_js, n_cms
+
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M UTC")
     cms_line = ""
     if merger.stats.get("cms_total"):
@@ -474,7 +495,9 @@ def main():
            f"- 融合站源：{merger.stats['final']}（精确去重 {merger.stats['dup']}，"
            f"同名异写去重 {merger.stats['dup_norm']}，多线路收敛 {merger.stats['dup_line']}，"
            f"网盘入口收敛 {merger.stats['dup_pan']}，"
-           f"失效剔除 {merger.stats['dropped_dead']}，上限 {MAX_SITES}）\n{cms_line}")
+           f"失效剔除 {merger.stats['dropped_dead']}，上限 {MAX_SITES}）\n"
+           f"- 分引擎版本：jar版 merged-jar.json（jar引擎 {merger.stats.get('n_jar',0)} + CMS {merger.stats.get('n_cms',0)}）"
+           f"｜js版 merged-js.json（QuickJS {merger.stats.get('n_js',0)} + CMS {merger.stats.get('n_cms',0)}）\n{cms_line}")
     with open(OUT_REPORT, "w", encoding="utf-8") as f:
         f.write(rep)
     print(rep)
