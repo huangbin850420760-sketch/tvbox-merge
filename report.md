@@ -1,6 +1,6 @@
-# 融合报告 2026-11-13 02:02 UTC
+# 融合报告 2026-11-14 01:33 UTC
 
 - 配置源可用：22/56
 - 融合站源：624（精确去重 64，同名异写去重 386，多线路收敛 44，网盘入口收敛 98，失效剔除 176，上限 800）
-- 分引擎版本：jar版 merged-jar.json（jar引擎 410 + CMS 67）｜js版 merged-js.json（QuickJS 147 + CMS 67）
-；CMS播放级探测 36/67 通过（流可达 0；失败分布 {'no_result': 18, 'search_fail': 12, 'detail_fail': 1}——海外视角仅统计不剔除，剔除由设备端真实视角决定）
+- 分引擎版本：jar版 merged-jar.json（jar引擎 409 + CMS 67）｜js版 merged-js.json（QuickJS 148 + CMS 67）
+；CMS播放级探测 35/67 通过（流可达 0；失败分布 {'no_result': 19, 'search_fail': 12, 'detail_fail': 1}——海外视角仅统计不剔除，剔除由设备端真实视角决定）
